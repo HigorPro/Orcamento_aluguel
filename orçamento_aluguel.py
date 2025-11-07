@@ -5,11 +5,13 @@ def solicitar_dados_cliente():
     Coleta as informações do cliente de forma interativa e validada.
     """
     print("=============================================")
-    print("==   Gerador de Orçamento de Aluguel   ==")
+    print("==   Gerador de Orçamento - R.M Imobiliária  ==")
     print("=============================================\n")
 
+    # Dicionário para armazenar as escolhas do cliente
     dados = {}
 
+    # Seleção do tipo de imóvel
     while True:
         try:
             tipo = int(input(
@@ -27,7 +29,8 @@ def solicitar_dados_cliente():
         except ValueError:
             print("Entrada inválida. Por favor, digite um número.")
 
-    if dados['tipo_imovel'] in [1, 2]: 
+    # Perguntas específicas para Apartamento ou Casa
+    if dados['tipo_imovel'] in [1, 2]: # Apartamento ou Casa
         while True:
             quartos_str = input("Deseja com 2 quartos? (s/n): ").lower()
             if quartos_str in ['s', 'n']:
@@ -44,7 +47,7 @@ def solicitar_dados_cliente():
             else:
                 print("Resposta inválida. Por favor, digite 's' para sim ou 'n' para não.")
 
-        if dados['tipo_imovel'] == 1: 
+        if dados['tipo_imovel'] == 1: # Apenas para Apartamento
             while True:
                 criancas_str = input("Possui crianças? (s/n): ").lower()
                 if criancas_str in ['s', 'n']:
@@ -53,7 +56,8 @@ def solicitar_dados_cliente():
                 else:
                     print("Resposta inválida. Por favor, digite 's' para sim ou 'n' para não.")
 
-    elif dados['tipo_imovel'] == 3: 
+    # Perguntas específicas para Estúdio
+    elif dados['tipo_imovel'] == 3: # Estúdio
         dados['vagas_estudio'] = 0
         while True:
             estacionamento_str = input("Deseja incluir 2 vagas de estacionamento por R$ 250,00? (s/n): ").lower()
@@ -77,6 +81,7 @@ def solicitar_dados_cliente():
             else:
                 print("Resposta inválida. Por favor, digite 's' para sim ou 'n' para não.")
 
+    # Parcelamento do contrato
     while True:
         try:
             parcelas = int(input("\nO valor do contrato é de R$ 2.000,00. Em quantas vezes deseja parcelar? (1 a 5): "))
@@ -98,32 +103,38 @@ def calcular_orcamento(dados_cliente):
     aluguel_mensal = 0
     desconto_aplicado = 0.0
 
-    if dados_cliente['tipo_imovel'] == 1:
+    # 1.a) Valores base
+    if dados_cliente['tipo_imovel'] == 1:  # Apartamento
         aluguel_mensal = 700.00
+        # 1.c) Adicional por 2 quartos
         if dados_cliente.get('dois_quartos', False):
             aluguel_mensal += 200.00
-        
-        if not dados_cliente.get('tem_criancas', False): 
+        # 1.g) Desconto para quem não tem crianças
+        if not dados_cliente.get('tem_criancas', True):
             desconto_aplicado = aluguel_mensal * 0.05
             aluguel_mensal -= desconto_aplicado
-
+        # 1.e) Adicional de garagem
         if dados_cliente.get('garagem', False):
             aluguel_mensal += 300.00
-        
-    elif dados_cliente['tipo_imovel'] == 2:
+
+    elif dados_cliente['tipo_imovel'] == 2:  # Casa
         aluguel_mensal = 900.00
+        # 1.d) Adicional por 2 quartos
         if dados_cliente.get('dois_quartos', False):
             aluguel_mensal += 250.00
+        # 1.e) Adicional de garagem
         if dados_cliente.get('garagem', False):
             aluguel_mensal += 300.00
 
-    elif dados_cliente['tipo_imovel'] == 3:
+    elif dados_cliente['tipo_imovel'] == 3:  # Estúdio
         aluguel_mensal = 1200.00
+        # 1.f) Vagas de estacionamento
         if dados_cliente.get('vagas_estudio', 0) > 0:
-            aluguel_mensal += 250.00
+            aluguel_mensal += 250.00  # Valor pelas 2 vagas iniciais
         if dados_cliente.get('vagas_extra', 0) > 0:
             aluguel_mensal += dados_cliente['vagas_extra'] * 60.00
 
+    # 1.b) Cálculo da parcela do contrato
     valor_contrato = 2000.00
     parcelas = dados_cliente['parcelas_contrato']
     valor_parcela_contrato = valor_contrato / parcelas
@@ -135,7 +146,7 @@ def apresentar_resultado(aluguel, parcela_contrato, num_parcelas, desconto):
     Exibe o resultado do orçamento formatado na tela.
     """
     print("\n---------------------------------------------")
-    print("---     ORÇAMENTO FINAL     ---")
+    print("---      ORÇAMENTO FINAL - R.M IMÓVEIS      ---")
     print("---------------------------------------------\n")
     
     if desconto > 0:
@@ -157,16 +168,17 @@ def gerar_csv(aluguel, parcela_contrato, num_parcelas):
         with open(nome_arquivo, 'w', newline='', encoding='utf-8') as arquivo_csv:
             escritor = csv.writer(arquivo_csv)
             
+            # Escreve o cabeçalho
             escritor.writerow(["Mês", "Valor da Parcela (R$)"])
             
+            # Escreve as 12 parcelas mensais
             for mes in range(1, 13):
                 if mes <= num_parcelas:
                     valor_total_mes = aluguel + parcela_contrato
                 else:
                     valor_total_mes = aluguel
                 
-                valor_formatado_br = f"{valor_total_mes:.2f}".replace('.', ',')
-                escritor.writerow([mes, valor_formatado_br])
+                escritor.writerow([mes, f"{valor_total_mes:.2f}"])
         
         print(f"\nArquivo '{nome_arquivo}' gerado com sucesso!")
         print("Ele contém o detalhamento das 12 parcelas do seu orçamento.")
@@ -183,5 +195,6 @@ def main():
     apresentar_resultado(aluguel_mensal, valor_parcela_contrato, num_parcelas_contrato, desconto)
     gerar_csv(aluguel_mensal, valor_parcela_contrato, num_parcelas_contrato)
 
+# Executa a aplicação
 if __name__ == "__main__":
     main()
